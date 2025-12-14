@@ -1,0 +1,11 @@
+/vendor/
+composer.lock
+.phpunit.result.cache
+.idea/
+.vscode/
+*.log
+*.cache
+.DS_Store
+README.md
+GITHUB_SETUP.md
+*.code-workspace

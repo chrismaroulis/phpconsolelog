@@ -1,0 +1,36 @@
+{
+    "name": "phpconsolelog/phpconsolelog",
+    "description": "Real-time console logging for PHP applications with WebSocket support",
+    "type": "library",
+    "keywords": ["logging", "debug", "console", "websocket", "realtime", "debugging"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "PHPConsoleLog Contributors"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "cboden/ratchet": "^0.4",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPConsoleLog\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PHPConsoleLog\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "start-server": "php examples/server-start.php"
+    },
+    "minimum-stability": "stable"
+}
+
