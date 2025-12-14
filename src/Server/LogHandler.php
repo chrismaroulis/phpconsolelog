@@ -35,6 +35,11 @@ class LogHandler implements HttpServerInterface
      */
     public function onOpen(ConnectionInterface $conn, ?RequestInterface $request = null)
     {
+        if (!$request) {
+            $this->sendResponse($conn, 400, 'Bad Request', ['error' => 'Request is missing']);
+            return;
+        }
+
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
 
@@ -309,4 +314,3 @@ class LogHandler implements HttpServerInterface
         // Not used for HTTP
     }
 }
-
