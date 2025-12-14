@@ -147,6 +147,9 @@ class Logger
 
         // Send asynchronously to avoid blocking the application
         try {
+            if ($this->options['debug'] ?? false) {
+                echo("PHPConsoleLog: Sending log data to $this->serverUrl - " . json_encode($payload) . "\r\n");
+            }
             $this->httpClient->post($this->serverUrl, [
                 'json' => $payload,
                 'headers' => [
@@ -157,6 +160,7 @@ class Logger
             // Silently fail - logging should never break the application
             // Optionally log to error_log for debugging
             if ($this->options['debug'] ?? false) {
+                echo("PHPConsoleLog: Failed to send log - " . $e->getMessage() . "\r\n");
                 error_log("PHPConsoleLog: Failed to send log - " . $e->getMessage());
             }
         }

@@ -9,6 +9,8 @@
  * Note: This script will start the server in the background, run tests, and stop it.
  */
 
+error_reporting(E_ALL & ~E_DEPRECATED &~E_NOTICE);
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPConsoleLog\Client\Logger;
@@ -21,11 +23,12 @@ class ServerTest
     private $testPort = 8888;
     private $testHost = 'localhost';
     private $serverUrl;
-    private $testKey = 'test-key-' . time();
+    private $testKey;
 
     public function __construct()
     {
         $this->serverUrl = "http://{$this->testHost}:{$this->testPort}";
+        $this->testKey = 'test-key-' . time();
     }
 
     public function run()
@@ -71,47 +74,87 @@ class ServerTest
 
     private function startServer()
     {
-        $command = sprintf(
-            'php %s %d %s > %s 2>&1 &',
-            escapeshellarg(__DIR__ . '/../examples/server-start.php'),
-            $this->testPort,
-            $this->testHost,
-            escapeshellarg(__DIR__ . '/server-output.log')
-        );
+        // First, make sure port is not already in use
+        if ($this->isPortInUse($this->testPort)) {
+            echo "⚠️  Port {$this->testPort} is already in use. Attempting to kill existing process...\n";
+            $this->killProcessOnPort($this->testPort);
+            sleep(2);
+        }
 
+        $logFile = __DIR__ . '/server-output.log';
+        
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            // Windows
+            // Windows - Use PowerShell to start process in background
+            $phpPath = PHP_BINARY;
+            $serverScript = __DIR__ . '/../examples/server-start.php';
             $command = sprintf(
-                'start /B php %s %d %s > %s 2>&1',
+                'powershell -Command "Start-Process -NoNewWindow -FilePath %s -ArgumentList %s,%d,%s -RedirectStandardOutput %s -RedirectStandardError %s"',
+                escapeshellarg($phpPath),
+                escapeshellarg($serverScript),
+                $this->testPort,
+                escapeshellarg($this->testHost),
+                escapeshellarg($logFile),
+                escapeshellarg($logFile)
+            );
+            exec($command);
+        } else {
+            // Unix-like
+            $command = sprintf(
+                'php %s %d %s > %s 2>&1 &',
                 escapeshellarg(__DIR__ . '/../examples/server-start.php'),
                 $this->testPort,
                 $this->testHost,
-                escapeshellarg(__DIR__ . '/server-output.log')
+                escapeshellarg($logFile)
             );
-            pclose(popen($command, 'r'));
-        } else {
-            // Unix-like
             exec($command);
         }
 
         // Wait and check if server is running
-        $maxAttempts = 10;
+        echo "Waiting for server to start";
+        $maxAttempts = 15;
         for ($i = 0; $i < $maxAttempts; $i++) {
+            echo ".";
             sleep(1);
             if ($this->isServerRunning()) {
+                echo "\n";
                 return true;
             }
         }
+        echo "\n";
 
         return false;
+    }
+
+    private function isPortInUse($port)
+    {
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $output = shell_exec("netstat -ano | findstr :{$port}");
+            return !empty($output) && strpos($output, 'LISTENING') !== false;
+        } else {
+            $output = shell_exec("lsof -ti tcp:{$port}");
+            return !empty(trim($output));
+        }
+    }
+
+    private function killProcessOnPort($port)
+    {
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            // Windows - Use PowerShell to kill process
+            $command = "powershell -Command \"Get-NetTCPConnection -LocalPort {$port} -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id \$_.OwningProcess -Force -ErrorAction SilentlyContinue }\"";
+            exec($command);
+        } else {
+            // Unix-like
+            exec("lsof -ti tcp:{$port} | xargs kill -9 2>/dev/null");
+        }
     }
 
     private function isServerRunning()
     {
         $ch = curl_init($this->serverUrl . '/viewer/' . $this->testKey);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FAILONERROR, false);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -123,13 +166,10 @@ class ServerTest
     {
         echo "\n🛑 Stopping test server...\n";
         
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            // Windows - kill PHP processes on the test port
-            exec("for /f \"tokens=5\" %a in ('netstat -aon ^| find \":{$this->testPort}\" ^| find \"LISTENING\"') do taskkill /F /PID %a 2>nul");
-        } else {
-            // Unix-like
-            exec("lsof -ti tcp:{$this->testPort} | xargs kill -9 2>/dev/null");
-        }
+        $this->killProcessOnPort($this->testPort);
+        
+        // Give it a moment to shut down
+        sleep(1);
 
         // Clean up log file
         $logFile = __DIR__ . '/server-output.log';

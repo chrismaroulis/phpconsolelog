@@ -47,7 +47,7 @@ class LogHandler implements HttpServerInterface
             $this->handleLogRequest($conn, $request);
         } elseif ($method === 'GET' && preg_match('#^/viewer/(.+)$#', $path, $matches)) {
             $key = $matches[1];
-            $this->handleViewerRequest($conn, $key);
+            $this->handleViewerRequest($conn, $key, $request);
         } else {
             $this->sendResponse($conn, 404, 'Not Found');
         }
@@ -95,9 +95,9 @@ class LogHandler implements HttpServerInterface
      * @param string $key
      * @return void
      */
-    private function handleViewerRequest(ConnectionInterface $conn, string $key): void
+    private function handleViewerRequest(ConnectionInterface $conn, string $key, RequestInterface $request): void
     {
-        $html = $this->getViewerHtml($key);
+        $html = $this->getViewerHtml($key, $request);
         $this->sendHtmlResponse($conn, 200, $html);
     }
 
@@ -271,22 +271,88 @@ class LogHandler implements HttpServerInterface
      * Get viewer HTML
      *
      * @param string $key
+     * @param RequestInterface $request
      * @return string
      */
-    private function getViewerHtml(string $key): string
+    private function getViewerHtml(string $key, RequestInterface $request): string
     {
         // Load viewer template
         $viewerPath = __DIR__ . '/../Viewer/viewer.html';
         if (file_exists($viewerPath)) {
             $html = file_get_contents($viewerPath);
             $html = str_replace('{{KEY}}', htmlspecialchars($key, ENT_QUOTES), $html);
-            $html = str_replace('{{WS_URL}}', "ws://{$_SERVER['HTTP_HOST']}/ws", $html);
+            
+            // Determine the host and port for WebSocket connection
+            // Support proxy headers (X-Forwarded-Host, X-Forwarded-Port) for NAT/port forwarding
+            $wsUrl = $this->constructWebSocketUrl($request);
+            
+            $html = str_replace('{{WS_URL}}', $wsUrl, $html);
             return $html;
         }
 
         // Fallback simple viewer
         return "<!DOCTYPE html><html><head><title>PHPConsoleLog Viewer - {$key}</title></head>" .
                "<body><h1>Viewer for key: {$key}</h1><p>Viewer template not found.</p></body></html>";
+    }
+
+    /**
+     * Construct WebSocket URL from HTTP request
+     * Handles proxy headers and port forwarding scenarios
+     *
+     * @param RequestInterface $request
+     * @return string WebSocket URL
+     */
+    private function constructWebSocketUrl(RequestInterface $request): string
+    {
+        // Check for proxy headers first (for reverse proxy / port forwarding)
+        $headers = $request->getHeaders();
+        
+        // Get host - prefer X-Forwarded-Host for proxied requests
+        $host = null;
+        if (isset($headers['X-Forwarded-Host'][0])) {
+            $host = $headers['X-Forwarded-Host'][0];
+        } elseif (isset($headers['Host'][0])) {
+            // Host header might include port (e.g., "example.com:8181")
+            $hostHeader = $headers['Host'][0];
+            $host = explode(':', $hostHeader)[0];
+        }
+        
+        if (!$host) {
+            $uri = $request->getUri();
+            $host = $uri->getHost() ?: 'localhost';
+        }
+        
+        // Get port - prefer X-Forwarded-Port for proxied requests
+        $port = null;
+        if (isset($headers['X-Forwarded-Port'][0])) {
+            $port = (int)$headers['X-Forwarded-Port'][0];
+        } elseif (isset($headers['Host'][0])) {
+            // Extract port from Host header if present (e.g., "example.com:8181")
+            $hostHeader = $headers['Host'][0];
+            $parts = explode(':', $hostHeader);
+            if (count($parts) > 1) {
+                $port = (int)$parts[1];
+            }
+        }
+        
+        if (!$port) {
+            $uri = $request->getUri();
+            $port = $uri->getPort();
+        }
+        
+        // Determine WebSocket scheme (ws or wss)
+        $scheme = 'ws';
+        if (isset($headers['X-Forwarded-Proto'][0]) && $headers['X-Forwarded-Proto'][0] === 'https') {
+            $scheme = 'wss';
+        }
+        
+        // Construct WebSocket URL
+        // Only include port if it's non-standard (not 80 for ws, not 443 for wss)
+        if ($port && !(($scheme === 'ws' && $port === 80) || ($scheme === 'wss' && $port === 443))) {
+            return "{$scheme}://{$host}:{$port}/ws";
+        }
+        
+        return "{$scheme}://{$host}/ws";
     }
 
     /**

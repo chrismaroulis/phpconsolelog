@@ -219,7 +219,7 @@
         </div>
     </div>
     
-    <div class="console" id="console">
+    <div class="console" id="log-console">
         <div class="empty-state" id="emptyState">
             Waiting for log messages...
         </div>
@@ -233,7 +233,7 @@
         let isConnected = false;
         let autoScroll = true;
 
-        const console = document.getElementById('console');
+        const logConsole = document.getElementById('log-console');
         const emptyState = document.getElementById('emptyState');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
@@ -329,11 +329,11 @@
             content.innerHTML = formatLogData(log.data);
             entry.appendChild(content);
 
-            console.appendChild(entry);
+            logConsole.appendChild(entry);
 
             // Auto-scroll to bottom
             if (autoScroll) {
-                console.scrollTop = console.scrollHeight;
+                logConsole.scrollTop = logConsole.scrollHeight;
             }
         }
 
@@ -440,9 +440,9 @@
 
         // Clear console
         function clearConsole() {
-            console.innerHTML = '';
+            logConsole.innerHTML = '';
             emptyState.classList.remove('hidden');
-            console.appendChild(emptyState);
+            logConsole.appendChild(emptyState);
         }
 
         // Clear button click
@@ -456,8 +456,8 @@
         });
 
         // Track auto-scroll preference
-        console.addEventListener('scroll', () => {
-            const isAtBottom = console.scrollHeight - console.scrollTop <= console.clientHeight + 50;
+        logConsole.addEventListener('scroll', () => {
+            const isAtBottom = logConsole.scrollHeight - logConsole.scrollTop <= logConsole.clientHeight + 50;
             autoScroll = isAtBottom;
         });
 

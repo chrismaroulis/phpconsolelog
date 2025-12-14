@@ -14,14 +14,18 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPConsoleLog\Client\Logger;
 
+$host = $argv[1] ?? '127.0.0.1';
+$port = $argv[2] ?? 8080;
+$key = $argv[3] ?? 'my-app-key';
+
 // Initialize the logger
-$logger = new Logger('http://localhost:8080/logger', 'my-app-key');
+$logger = new Logger("http://{$host}:{$port}/logger", $key, ['debug' => true]);
 
 echo "PHPConsoleLog Client Example\n";
 echo "============================\n\n";
 echo "Make sure you have:\n";
 echo "1. Started the server (php examples/server-start.php)\n";
-echo "2. Opened the viewer at http://localhost:8080/viewer/my-app-key\n\n";
+echo "2. Opened the viewer at http://{$host}:{$port}/viewer/{$key}\n\n";
 echo "Sending log messages...\n\n";
 
 // Basic logging
