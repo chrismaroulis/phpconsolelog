@@ -6,6 +6,5 @@ composer.lock
 *.log
 *.cache
 .DS_Store
-README.md
 GITHUB_SETUP.md
 *.code-workspace
