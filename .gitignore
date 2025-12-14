@@ -8,3 +8,5 @@ composer.lock
 .DS_Store
 GITHUB_SETUP.md
 *.code-workspace
+setup.bat
+setup.sh

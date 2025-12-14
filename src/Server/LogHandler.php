@@ -33,7 +33,7 @@ class LogHandler implements HttpServerInterface
      * @param RequestInterface $request
      * @return void
      */
-    public function onOpen(ConnectionInterface $conn, RequestInterface $request = null)
+    public function onOpen(ConnectionInterface $conn, ?RequestInterface $request = null)
     {
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
