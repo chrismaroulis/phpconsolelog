@@ -2,6 +2,8 @@
 
 Real-time console logging for PHP applications with WebSocket support. Debug your PHP code with the same ease as using `console.log()` in JavaScript!
 
+> **Disclaimer:** This entire repository, including all code and implementation, was initially created with Cursor and Claude Sonnet 4.5. Only the prompt was made by Chris Maroulis.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D7.4-blue.svg)](https://php.net)
 
