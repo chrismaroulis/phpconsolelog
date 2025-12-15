@@ -25,7 +25,31 @@ This will download and install:
 
 ## Step 2: Start the Server
 
-In your terminal, run:
+**Option A: Using the simple boilerplate (recommended)**
+
+First, copy the server file to your project root:
+
+```bash
+cp vendor/phpconsolelog/phpconsolelog/server.php .
+```
+
+Then start it with:
+
+```bash
+# Windows
+start-server.bat
+
+# PowerShell
+.\start-server.ps1
+
+# Linux/Mac
+./start-server.sh
+
+# Or directly
+php server.php
+```
+
+**Option B: Using the examples directory**
 
 ```bash
 php examples/server-start.php

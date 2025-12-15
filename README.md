@@ -36,9 +36,48 @@ Install via Composer:
 composer require phpconsolelog/phpconsolelog
 ```
 
+### Quick Deployment
+
+After installation, copy the boilerplate files to your project root:
+
+```bash
+# Copy the server file
+cp vendor/phpconsolelog/phpconsolelog/server.php .
+
+# Copy the launcher scripts (choose what you need)
+cp vendor/phpconsolelog/phpconsolelog/start-server.bat .      # Windows
+cp vendor/phpconsolelog/phpconsolelog/start-server.ps1 .      # PowerShell
+cp vendor/phpconsolelog/phpconsolelog/start-server.sh .       # Linux/Mac
+
+# Make the shell script executable (Linux/Mac)
+chmod +x start-server.sh
+```
+
+That's it! Now you can start the server with a simple command.
+
 ## Quick Start
 
 ### 1. Start the Server
+
+**Option A: Use the simple boilerplate (recommended for users)**
+
+Copy `server.php` to your project and run one of these commands:
+
+```bash
+# Windows (Command Prompt)
+start-server.bat
+
+# Windows (PowerShell)
+.\start-server.ps1
+
+# Linux/Mac
+./start-server.sh
+
+# Or directly with PHP (all platforms)
+php server.php
+```
+
+**Option B: Run from vendor directory (for development/testing)**
 
 ```bash
 php vendor/phpconsolelog/phpconsolelog/examples/server-start.php
@@ -200,6 +239,35 @@ $logger->log("User:", $user, "Action:", $action, "Result:", $result);
 ## Server Configuration
 
 ### Starting the Server
+
+**Using the boilerplate files (recommended):**
+
+The package includes `server.php` and launch scripts that you can copy to your project:
+
+```bash
+# Windows Batch
+start-server.bat
+
+# Windows PowerShell  
+.\start-server.ps1
+
+# Linux/Mac Bash
+./start-server.sh
+
+# Direct PHP
+php server.php
+```
+
+To customize the port or host, edit the configuration section at the top of `server.php`:
+
+```php
+// CONFIGURATION - Edit these settings as needed
+$port = 8080;                    // Server port
+$host = '0.0.0.0';              // Bind to all interfaces
+$bufferSize = 100;              // Number of messages to keep in history
+```
+
+**Using the examples directory:**
 
 ```bash
 # Default (port 8080, all interfaces)

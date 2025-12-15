@@ -29,6 +29,7 @@
     },
     "scripts": {
         "test": "phpunit",
+        "serve": "php server.php",
         "start-server": "php examples/server-start.php"
     },
     "minimum-stability": "stable"
