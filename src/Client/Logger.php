@@ -17,6 +17,7 @@ class Logger
     private bool $enabled = true;
     private Client $httpClient;
     private array $options;
+    private int $errors_count = 0;
 
     /**
      * Create a new Logger instance
@@ -32,6 +33,7 @@ class Logger
         $this->options = array_merge([
             'timeout' => 1.0,
             'async' => true,
+            'disable_on_errors' => 5, // number of errors after which logger should be disabled
         ], $options);
 
         $this->httpClient = new Client([
@@ -163,7 +165,43 @@ class Logger
                 echo("PHPConsoleLog: Failed to send log - " . $e->getMessage() . "\r\n");
                 error_log("PHPConsoleLog: Failed to send log - " . $e->getMessage());
             }
+            $this->errors_count++;
+            if($this->options['disable_on_errors'] > 0) {
+                if ($this->errors_count >= $this->options['disable_on_errors']) {
+                    $this->disable();
+                    echo("PHPConsoleLog: Force disabled due to errors count - " . $this->errors_count . "\r\n");
+                    error_log("PHPConsoleLog: Force disabled due to errors count - " . $this->errors_count);
+                }
+            }
         }
+    }
+
+    /**
+     * Clear the error count
+     *
+     * @return void
+     */
+    public function clearErrorsCount(): void {
+        $this->errors_count = 0;
+    }
+
+    /**
+     * Get the error count
+     *
+     * @return int
+     */
+    public function getErrorsCount(): int {
+        return $this->errors_count;
+    }
+
+    /**
+     * Set the number of errors after which logger should be disabled
+     *
+     * @param int $count Number of errors
+     * @return void
+     */
+    public function setDisableOnErrorsCount(int $count): void {
+        $this->options['disable_on_errors'] = $count;
     }
 
     /**
